@@ -1,4 +1,6 @@
-﻿#!/usr/bin/env python3
+﻿# VERSAO 1 - FUNCIONA LOCAL
+
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
