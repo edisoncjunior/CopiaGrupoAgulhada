@@ -4,14 +4,10 @@
 import os
 import asyncio
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 
-# -------------------------------------------------
-# Ambiente local → carrega .env (se existir)
-# Ambiente web  → usa apenas variáveis de ambiente
-# -------------------------------------------------
 try:
     from dotenv import load_dotenv
-
     if os.path.exists(".env"):
         load_dotenv()
         print("[ENV] .env carregado (execução local)")
@@ -20,25 +16,21 @@ try:
 except ImportError:
     print("[ENV] python-dotenv não instalado (execução web)")
 
-# -------------------------------------------------
-# Variáveis de ambiente (obrigatórias)
-# -------------------------------------------------
 API_ID = int(os.environ["API_ID"])
 API_HASH = os.environ["API_HASH"]
 SOURCE_CHAT_ID = int(os.environ["SOURCE_CHAT_ID"])
 TARGET_CHAT_ID = int(os.environ["TARGET_CHAT_ID"])
+SESSION_STRING = os.environ.get("TELEGRAM_SESSION_STRING")
 
-# Nome da sessão (opcional)
-SESSION_NAME = os.environ.get("SESSION_NAME", "session_forwarder")
+if not SESSION_STRING:
+    raise RuntimeError("TELEGRAM_SESSION_STRING não definida")
 
-# -------------------------------------------------
-# Inicializa cliente
-# -------------------------------------------------
-client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+client = TelegramClient(
+    StringSession(SESSION_STRING),
+    API_ID,
+    API_HASH
+)
 
-# -------------------------------------------------
-# Listener em tempo real
-# -------------------------------------------------
 @client.on(events.NewMessage(chats=SOURCE_CHAT_ID))
 async def forward_message(event):
     try:
@@ -53,18 +45,17 @@ async def forward_message(event):
                 TARGET_CHAT_ID,
                 event.message.text
             )
-
         print("Mensagem encaminhada com sucesso")
-
     except Exception as e:
         print(f"Erro ao encaminhar mensagem: {e}")
 
-# -------------------------------------------------
-# Execução principal
-# -------------------------------------------------
 async def main():
     print("Bot de encaminhamento iniciado...")
-    await client.start()
+    await client.connect()
+
+    if not await client.is_user_authorized():
+        raise RuntimeError("Sessão Telegram inválida ou expirada")
+
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
