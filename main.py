@@ -1,4 +1,5 @@
-﻿#!/usr/bin/env python3
+﻿Funcionou em 04/02 as 00h42
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
